@@ -1,3 +1,4 @@
+import re
 from itertools import izip_longest
 
 from django import template
@@ -52,12 +53,11 @@ def load_charts(chart_list=None, render_to=''):
       to the ``chartloader.js`` javascript file to be embedded in the webpage. 
       The ``chartloader.js`` has a jQuery script that renders a HighChart for 
       each of the options in the JSON array"""
-      
     embed_script = (
       '<script type="text/javascript">\n'
       'var _chartit_hco_array = %s;\n</script>\n'
       '<script src="%s" type="text/javascript">\n</script>')
-    
+   
     if chart_list is not None:
         if isinstance(chart_list, (Chart, PivotChart)):
             chart_list = [chart_list]
@@ -69,6 +69,9 @@ def load_charts(chart_list=None, render_to=''):
         embed_script = (embed_script % (simplejson.dumps(chart_list, 
                                                          use_decimal=True),
                                         CHART_LOADER_URL))
+
+        # Escape functions
+        embed_script = re.sub('"(?P<fn>function\(\){.+?})"', '\g<fn>', embed_script)
     else:
         embed_script = embed_script %((), CHART_LOADER_URL)
     return mark_safe(embed_script)
