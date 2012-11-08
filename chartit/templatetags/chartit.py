@@ -1,11 +1,12 @@
 import re
+import simplejson
+import posixpath
+
 from itertools import izip_longest
 
 from django import template
-from django.utils import simplejson
 from django.utils.safestring import mark_safe
 from django.conf import settings
-import posixpath
 
 from ..charts import Chart, PivotChart
 
