@@ -35,6 +35,9 @@ def _recursive_translate(item):
     if isinstance(item, dict) or isinstance(item, defaultdict):
         for key, value in item.items():
             item[key] = _recursive_translate(value)
+            # Cache our original value for client side reference
+            if isinstance(value, basestring):
+                item[key + '_raw'] = value
     return item
 
 @register.filter
