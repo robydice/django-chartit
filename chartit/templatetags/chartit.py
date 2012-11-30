@@ -7,6 +7,7 @@ from itertools import izip_longest
 from django import template
 from django.utils.safestring import mark_safe
 from django.conf import settings
+from django.utils.translation import ugettext as _
 
 from ..charts import Chart, PivotChart
 
@@ -63,6 +64,20 @@ def load_charts(chart_list=None, render_to=''):
         if isinstance(chart_list, (Chart, PivotChart)):
             chart_list = [chart_list]
         chart_list = [c.hcoptions for c in chart_list]
+
+        # If translating, wrap series data in translate tags
+        if len(settings.LANGUAGES) > 1:
+            for chart in chart_list:
+                for series in chart['series']:
+                    for i in xrange(0, len(series['data'])):
+                        point = series['data'][i]
+                        if isinstance(point, basestring):
+                            series['data'][i] = _(point)
+                        elif isinstance(point, dict) or isinstance(point, defaultdict):
+                            for key, value in point.items():
+                                if value and isinstance(value, basestring):
+                                    point[key] = _(value)
+
         render_to_list = [s.strip() for s in render_to.split(',')]
         for hco, render_to in izip_longest(chart_list, render_to_list):
             if render_to:
