@@ -3,6 +3,7 @@ import simplejson
 import posixpath
 
 from itertools import izip_longest
+from collections import defaultdict
 
 from django import template
 from django.utils.safestring import mark_safe
@@ -25,6 +26,16 @@ except AttributeError:
                                       'chartloader.js')
 
 register = template.Library()
+
+def _recursive_translate(item):
+    if item and isinstance(item, basestring):
+        return _(item)
+    if isinstance(item, list):
+        return [_recursive_translate(x) for x in item]
+    if isinstance(item, dict) or isinstance(item, defaultdict):
+        for key, value in item.items():
+            item[key] = _recursive_translate(value)
+    return item
 
 @register.filter
 def load_charts(chart_list=None, render_to=''):
@@ -67,16 +78,7 @@ def load_charts(chart_list=None, render_to=''):
 
         # If translating, wrap series data in translate tags
         if len(settings.LANGUAGES) > 1:
-            for chart in chart_list:
-                for series in chart['series']:
-                    for i in xrange(0, len(series['data'])):
-                        point = series['data'][i]
-                        if isinstance(point, basestring):
-                            series['data'][i] = _(point)
-                        elif isinstance(point, dict) or isinstance(point, defaultdict):
-                            for key, value in point.items():
-                                if value and isinstance(value, basestring):
-                                    point[key] = _(value)
+            chart_list = _recursive_translate(chart_list)
 
         render_to_list = [s.strip() for s in render_to.split(',')]
         for hco, render_to in izip_longest(chart_list, render_to_list):
