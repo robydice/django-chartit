@@ -8,7 +8,7 @@ from django.db.models.query import QuerySet
 from .exceptions import APIInputError
 
 
-def _validate_field_lookup_term(model, term):
+def _validate_field_lookup_term(model, term, source=None):
     """Checks whether the term is a valid field_lookup for the model.
 
     **Args**:
@@ -16,6 +16,9 @@ def _validate_field_lookup_term(model, term):
       the term is a valid field_lookup.
     - **term** (**required**) - the term to check whether it is a valid
       field lookup for the model supplied.
+
+    - **source** (**optional**) - the optional QuerySet where to check
+      if the field belongs to aggregates, extras or annotates
 
     **Returns**:
     -  The verbose name of the field if the supplied term is a valid field.
@@ -27,9 +30,15 @@ def _validate_field_lookup_term(model, term):
     # TODO: Memoization for speed enchancements?
     terms = term.split('__')
     model_fields = model._meta.get_all_field_names()
-    if terms[0] not in model_fields:
-        raise APIInputError("Field %r does not exist. Valid lookups are %s."
-                         % (terms[0], ', '.join(model_fields)))
+    c = terms[0]
+
+    if c not in model_fields:
+        if source and not (c in source.query.aggregates.keys() or c in source.query.extra.keys() or c in source.query.annotations.keys()):
+            raise APIInputError("Field %r does not exist. Valid lookups are %s."
+                             % (terms[0], ', '.join(model_fields)))
+        else:
+            return c
+
     if len(terms) == 1:
         return model._meta.get_field(terms[0]).verbose_name
     else:
@@ -275,7 +284,7 @@ def clean_dps(series):
             except KeyError:
                 raise APIInputError("%s is missing the 'source' key." %td)
             td.setdefault('field', tk)
-            fa = _validate_field_lookup_term(td['source'].model, td['field'])\
+            fa = _validate_field_lookup_term(td['source'].model, td['field'], source=td['source'])\
                    .title()
             # If the user supplied term is not a field name, use it as an alias
             if tk != td['field']:
