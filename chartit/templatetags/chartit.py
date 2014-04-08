@@ -67,7 +67,7 @@ def load_charts(chart_list=None, render_to=''):
         if isinstance(chart_list, (Chart, PivotChart)):
             chart_list = [chart_list]
         chart_list = [c.hcoptions for c in chart_list]
-        if chart_list[0]['series'][0]['type'] == 'pie':
+        if isinstance(c,PivotChart) and chart_list[0]['series'][0]['type'] == 'pie':
             chart_list[0]['series'][0]['data'] = zip(chart_list[0]['xAxis']['categories'],chart_list[0]['series'][0]['data'])
         render_to_list = [s.strip() for s in render_to.split(',')]
         for hco, render_to in izip_longest(chart_list, render_to_list):
