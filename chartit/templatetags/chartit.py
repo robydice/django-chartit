@@ -76,6 +76,7 @@ def load_charts(chart_list=None, render_to=''):
         embed_script = (embed_script % (simplejson.dumps(chart_list, 
                                                          use_decimal=True,
                                                          default=date_format),
+                                        CHART_LOADER_URL))
     else:
         embed_script = embed_script %((), CHART_LOADER_URL)
     return mark_safe(embed_script)
