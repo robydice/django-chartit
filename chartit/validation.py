@@ -33,7 +33,9 @@ def _validate_field_lookup_term(model, term, source=None):
     c = terms[0]
 
     if c not in model_fields:
-        if source and not (c in source.query.aggregates.keys() or c in source.query.extra.keys() or c in source.query.annotations.keys()):
+        if source and not ((source.query.aggregates and c in source.query.aggregates.keys()) or \
+                           (source.query.extra and c in source.query.extra.keys()) or \
+                           (source.query.annotations and c in source.query.annotations.keys())):
             raise APIInputError("Field %r does not exist. Valid lookups are %s."
                              % (terms[0], ', '.join(model_fields)))
         else:
@@ -93,7 +95,9 @@ def _clean_categories(categories, source):
                             %(categories, type(categories)))
     field_aliases = {}
     for c in categories:
-        if c in source.query.aggregates.keys() or c in source.query.extra.keys() or c in source.query.annotations.keys():
+        if (source.query.aggregates and c in source.query.aggregates.keys()) or \
+           (source.query.extra and c in source.query.extra.keys()) or \
+           (source.query.annotations and c in source.query.annotations.keys()):
             field_aliases[c] = c
         else:
             field_aliases[c] = _validate_field_lookup_term(source.model, c)
